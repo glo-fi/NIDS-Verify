@@ -43,13 +43,6 @@ def prepare_data_for_training(data_df, batch_size, split, save_path):
 
 def get_model(input_size, model):
     initializer = tf.keras.initializers.GlorotUniform(seed=42)
-    if model == 'small':
-        model = keras.Sequential([
-            layers.Input(shape=(input_size,), name='input_features'),
-            layers.Dense(128, activation='relu', name='dense_1'),
-            layers.Dense(2, activation='linear', name='output_layer')
-        ])
-
     if model == 'mid':
         model = keras.Sequential([
             layers.Input(shape=(input_size,), name='input_features'),
@@ -65,79 +58,6 @@ def get_model(input_size, model):
             layers.Dense(256, activation='relu', name='dense_2'),
             layers.Dense(128, activation='relu', name='dense_3'),
             layers.Dense(2, activation='linear', name='output_layer')
-        ])
-
-    if model == 'mid3':
-        model = keras.Sequential([
-            layers.Input(shape=(input_size,), name='input_features'),
-            layers.Dense(512, activation='relu', name='dense_1'),
-            layers.Dense(256, activation='relu', name='dense_2'),
-            layers.Dense(256, activation='relu', name='dense_3'),
-            layers.Dense(128, activation='relu', name='dense_4'),
-            layers.Dense(2, activation='linear', name='output_layer')
-        ])
-    
-    if model == 'mid4':
-        model = keras.Sequential([
-            layers.Input(shape=(input_size,), name='input_features'),
-            layers.Dense(512, activation='relu', name='dense_0'),
-            layers.Dense(512, activation='relu', name='dense_1'),
-            layers.Dense(256, activation='relu', name='dense_2'),
-            layers.Dense(128, activation='relu', name='dense_3'),
-            layers.Dense(2, activation='linear', name='output_layer')
-        ])
-
-    if model == 'big':
-        model = keras.Sequential([
-            layers.Input(shape=(input_size,), name='input_features'),
-            layers.Dense(1024, activation='relu', kernel_initializer=initializer, name='dense_1'),
-            layers.Dense(512, activation='relu', kernel_initializer=initializer, name='dense_2'),
-            layers.Dense(256, activation='relu', kernel_initializer=initializer, name='dense_3'),
-            layers.Dense(128, activation='relu', kernel_initializer=initializer, name='dense_4'),
-            layers.Dense(2, activation='linear', kernel_initializer=initializer, name='output_layer')
-        ])
-
-    if model == 'big2':
-        model = keras.Sequential([
-            layers.Input(shape=(input_size,), name='input_features'),
-            layers.Dense(1024, activation='relu', kernel_initializer=initializer, name='dense_1'),
-            layers.Dense(512, activation='relu', kernel_initializer=initializer, name='dense_2'),
-            layers.Dense(512, activation='relu', kernel_initializer=initializer, name='dense_3'),
-            layers.Dense(256, activation='relu', kernel_initializer=initializer, name='dense_4'),
-            layers.Dense(2, activation='linear', kernel_initializer=initializer, name='output_layer')
-        ])
-
-    if model == 'big3':
-        model = keras.Sequential([
-            layers.Input(shape=(input_size,), name='input_features'),
-            layers.Dense(1024, activation='relu', kernel_initializer=initializer, name='dense_1'),
-            layers.Dense(1024, activation='relu', kernel_initializer=initializer, name='dense_2'),
-            layers.Dense(512, activation='relu', kernel_initializer=initializer, name='dense_3'),
-            layers.Dense(256, activation='relu', kernel_initializer=initializer, name='dense_4'),
-            layers.Dense(2, activation='linear', kernel_initializer=initializer, name='output_layer')
-        ])
-    
-    if model == 'big4':
-        model = keras.Sequential([
-            layers.Input(shape=(input_size,), name='input_features'),
-            layers.Dense(2048, activation='relu', kernel_initializer=initializer, name='dense_1'),
-            layers.Dense(1024, activation='relu', kernel_initializer=initializer, name='dense_2'),
-            layers.Dense(512, activation='relu', kernel_initializer=initializer, name='dense_3'),
-            layers.Dense(256, activation='relu', kernel_initializer=initializer, name='dense_4'),
-            layers.Dense(2, activation='linear', kernel_initializer=initializer, name='output_layer')
-        ])
-
-    if model == 'massive':
-        model = keras.Sequential([
-            layers.Input(shape=(input_size,), name='input_features'),
-            #layers.Dense(8182, activation='relu', kernel_initializer=initializer, name='dense_1'),
-            #layers.Dense(4096, activation='relu', kernel_initializer=initializer, name='dense_2'),
-            layers.Dense(2048, activation='relu', kernel_initializer=initializer, name='dense_3'),
-            layers.Dense(1024, activation='relu', kernel_initializer=initializer, name='dense_4'),
-            layers.Dense(512, activation='relu', kernel_initializer=initializer, name='dense_5'),
-            layers.Dense(256, activation='relu', kernel_initializer=initializer, name='dense_6'),
-            layers.Dense(128, activation='relu', kernel_initializer=initializer, name='dense_7'),
-            layers.Dense(2, activation='linear', kernel_initializer=initializer, name='output_layer')
         ])
 
     print(model.summary())
@@ -188,7 +108,8 @@ if __name__ == '__main__':
     neg_train = "CIC2017" # // CIC 2017 but just HULK -> Generalise to different networks + page sizes (CIC 2018 Hulk + DetGen Hulk)
 
     pos_test = "CIC2018"
-    neg_test = "DetGenSSH"
+    neg_test = "DetGenSSH" # These are used for loading the unprocessed data and preprocessing it
+                           # Since we provide the preprocessed data, these aren't used.
 
 
     preprocess_dict={"time_max": 50000000000,
