@@ -39,6 +39,8 @@ type InputVector = Tensor Rat [inputSize]
 timeElapsed       =  0
 protocol          =  1
 
+-- Unfortunately, Vehicle's type system is strict and we have to define each of these manually
+
 pktDirection1     =  2 -- 2 + 0 * m + 0
 pktDirection2     =  3 -- 2 + 0 * m + 1
 pktDirection3     =  4 -- 2 + 0 * m + 2
@@ -141,12 +143,13 @@ checkSizes i = pktSize1 <= i <= pktSize10
 
 -- Valid Input
 
--- Instead of checking for every combination of packet directions, we can just consider the 5 most common combinations
--- Taking the 5 most common combinations (and assuming that the initial handshake compleetes correctly) we can write
+-- Instead of checking for every combination of packet directions, we can just consider the most common combinations
+-- Taking the most common combinations (and assuming that the initial handshake compleetes correctly) we can write
 -- a relaxed spefication that still captures approx. 70% of flows in training data whilst reducing our checks from 2048
 -- to 8!
+
 commonDirs : InputVector -> Bool
-commonDirs x = x ! pktDirection1 == 0.0 and x ! pktDirection2 == 1.0 and (x ! pktDirection3 == 0.0) and x ! pktDirection4 == 0.0 and (x ! pktDirection5 == 1.0) and x ! pktDirection6 == 1.0 and x ! pktDirection7 == 1.0 and (x ! pktDirection8 == 1.0) and (x ! pktDirection9 == 1.0 or x ! pktDirection9 == 0.0) and (x ! pktDirection10 == 0.0) 
+commonDirs x = x ! pktDirection1 == 0.0 and x ! pktDirection2 == 1.0 and (x ! pktDirection3 == 0.0 or x ! pktDirection3 == 1.0) and x ! pktDirection4 == 0.0 and (x ! pktDirection5 == 0.0 or x ! pktDirection5 == 1.0) and x ! pktDirection6 == 1.0 and x ! pktDirection7 == 1.0 and (x ! pktDirection8 == 0.0 or x ! pktDirection8 == 1.0) and (x ! pktDirection9 == 0.0 or x ! pktDirection9 == 1.0) and (x ! pktDirection10 == 0.0 or x ! pktDirection10 == 1.0) 
 
 -- We can do something similar with flags
 commonFlags : InputVector -> Bool
@@ -159,19 +162,11 @@ validInput2 : InputVector -> Bool
 validInput2 x = commonDirs x
 
 validInput3 : InputVector -> Bool
-validInput3 x = forall i . checkPktFlags i  => x ! i == 0.0 or x ! i == 0.015625 or x ! i == 0.03125 or x ! i == 0.046875 or x ! i == 0.0625 or x ! i == 0.078125 or x ! i == 0.09375 or x ! i == 0.109375 or x ! i == 0.125 or x ! i == 0.140625 or x ! i == 0.15625 or x ! i == 0.171875 or x ! i == 0.1875 or x ! i == 0.203125 or x ! i == 0.21875 or x ! i == 0.234375 or x ! i == 0.25 or x ! i == 0.265625 or x ! i == 0.28125 or x ! i == 0.296875 or x ! i == 0.3125 or x ! i == 0.328125 or x ! i == 0.34375 or x ! i == 0.359375 or x ! i == 0.375 or x ! i == 0.390625 or x ! i == 0.40625 or x ! i == 0.421875 or x ! i == 0.4375 or x ! i == 0.453125 or x ! i == 0.46875 or x ! i == 0.484375 or x ! i == 0.5 or x ! i == 0.515625 or x ! i == 0.53125 or x ! i == 0.546875 or x ! i == 0.5625 or x ! i == 0.578125 or x ! i == 0.59375 or x ! i == 0.609375 or x ! i == 0.625 or x ! i == 0.640625 or x ! i == 0.65625 or x ! i == 0.671875 or x ! i == 0.6875 or x ! i == 0.703125 or x ! i == 0.71875 or x ! i == 0.734375 or x ! i == 0.75 or x ! i == 0.765625 or x ! i == 0.78125 or x ! i == 0.796875 or x ! i == 0.8125 or x ! i == 0.828125 or x ! i == 0.84375 or x ! i == 0.859375 or x ! i == 0.875 or x ! i == 0.890625 or x ! i == 0.90625 or x ! i == 0.921875 or x ! i == 0.9375 or x ! i == 0.953125 or x ! i == 0.96875 or x ! i == 0.984375 or x ! i == 1.0
-
-validInput4 : InputVector -> Bool
-validInput4 x = x ! pktIATs1 == 0.0
-
--- validInput : InputVector -> Bool
--- validInput x = validInput1 x and validInput4 x
+validInput3 x = x ! pktIATs1 == 0.0
 
 validInput : InputVector -> Bool
-validInput x = validInput1 x and validInput2 x and commonFlags x and validInput4 x
+validInput x = validInput1 x and validInput2 x and commonFlags x and validInput3 x
 
--- validInput : InputVector -> Bool
--- validInput x = validInput1 x and validInput2 x and validInput3 x and validInput4 x
 
 -- Valid TCP handshake
 
@@ -234,7 +229,8 @@ validIATs : InputVector -> Bool
 validIATs x = forall i . checkIATs i => (x ! i >= 0.01)
 
 -- ValidSizes
-
+-- Note that we also restrict the sizes of the packets from below.
+-- This sort of restriction was necessary (discovered during our human-in-the-loop process) to prevent all packet sizes all being minimal.
 validSizes : InputVector -> Bool
 validSizes x = forall i . checkSizes i => (x ! i >= 40/1000 ) and (0.4 <= x ! pktSize10 + x ! pktSize9 + x ! pktSize8 + x ! pktSize7 + x ! pktSize6 + x ! pktSize5 )
 
@@ -250,7 +246,6 @@ INvalidTimeElapsed2 x = 0.0000000000000000000000000000001 <= x ! timeElapsed <= 
 
 INvalidIATs : InputVector -> Bool
 INvalidIATs x = x ! pktIATs3 > IATsThreshold or x ! pktIATs4 > IATsThreshold or x ! pktIATs5 > IATsThreshold or x ! pktIATs9 > IATsThreshold or x ! pktIATs10 > IATsThreshold
--- INvalidIATs x = forall i . checkIATs i => (exists i . x ! i > 0.4)
 
 
 -- BoundFlowDuration

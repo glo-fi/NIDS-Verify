@@ -1,0 +1,6 @@
+neural_structured_learning==1.4.0
+numpy==1.25.2
+pandas==2.2.3
+scikit_learn==1.3.2
+tensorflow==2.9.1
+tensorflow_datasets==4.9.3

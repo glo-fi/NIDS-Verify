@@ -141,18 +141,6 @@ def preprocess(df):
     df[['Pkt_Direction', 'Pkt_Flags', 'Pkt_IATs', 'Pkt_Sizes']] = df[['Pkt_Direction', 'Pkt_Flags', 'Pkt_IATs', 'Pkt_Sizes']].applymap(literal_eval)
     # Drop unwanted columns
     df = df[['Time_Elapsed', 'Protocol', 'Pkt_Direction', 'Pkt_Flags', 'Pkt_IATs', 'Pkt_Sizes']]
-    # # Create a new column 'Pkt_Flags_One_Hot' with one-hot encoded lists                                                  #___
-    # pos_df['Pkt_Flags_One_Hot'] = pos_df['Pkt_Flags'].apply(value_to_binary_list)                                         #   |
-    # neg_df['Pkt_Flags_One_Hot'] = neg_df['Pkt_Flags'].apply(value_to_binary_list)                                         #   |
-                                                                                                                            #   |
-    # # Ensure 'Pkt_Flags_One_Hot' is always a list of lists                                                                #   |
-    # pos_df['Pkt_Flags_One_Hot'] = pos_df['Pkt_Flags_One_Hot'].apply(lambda x: [x] if not isinstance(x[0], list) else x)   #   |---> old 1-hot encoding
-    # neg_df['Pkt_Flags_One_Hot'] = neg_df['Pkt_Flags_One_Hot'].apply(lambda x: [x] if not isinstance(x[0], list) else x)   #   |
-                                                                                                                            #   |
-    # # Drop unwanted columns                                                                                               #   |
-    # pos_df = pos_df[['Time_Elapsed', 'Protocol', 'Pkt_Direction', 'Pkt_Flags_One_Hot', 'Pkt_IATs', 'Pkt_Sizes']]          #   |
-    # neg_df = neg_df[['Time_Elapsed', 'Protocol', 'Pkt_Direction', 'Pkt_Flags_One_Hot', 'Pkt_IATs', 'Pkt_Sizes']]          #___|
-
     return df
 
 
@@ -167,7 +155,7 @@ def load_datasets(train_pos, train_neg, test_pos, test_neg, resample=None, balan
     neg_test_df = neg_test_df.reset_index(drop=True)
 
     # Randomly sample from the negative dataframe to match the size of the positive dataframe
-    # This probably isn't best practise but it's also what LUCID does, so let's leave it in
+    # This probably isn't best practise but it's also what LUCID does (our main comparison), so let's leave it in
     if balance:
         pos_train_df = pos_train_df.sample(n=len(neg_train_df.index), random_state=42)
 
@@ -310,18 +298,13 @@ def pipeline(pos_train,
             load=False,
             attack_name="DoS"):
     if load:
-        train_data_df = pd.read_csv(f'./data/full-preprocessed-dos3-data-train.csv')
+        train_data_df = pd.read_csv(f'./data/preprocessed-dos-train.csv')
         train_features = train_data_df.iloc[:, :(len(train_data_df.columns)-1)]
         train_labels = train_data_df.iloc[:, -1:]
         print(train_labels.value_counts())
 
-        #test_data_df = pd.read_csv(f'./data/full-preprocessed-{attack_name.lower()}-data-test.csv')
 
-        valid_data_df = pd.read_csv(f'./data/full-preprocessed-dos2-data-test.csv')
-        valid_features = valid_data_df.iloc[:, :(len(valid_data_df.columns)-1)]
-        valid_labels = valid_data_df.iloc[:, -1:]
-
-        test_data_df = pd.read_csv(f'./data/full-preprocessed-dos3-data-test.csv')
+        test_data_df = pd.read_csv(f'./data/preprocessed-dos-test.csv')
         print(test_data_df.columns)
         test_data_df = test_data_df[test_data_df['42'] == 1]
         test_features = test_data_df.iloc[:, :(len(test_data_df.columns)-1)]
@@ -329,14 +312,12 @@ def pipeline(pos_train,
 
 
         train_dataset = tf.data.Dataset.from_tensor_slices((train_features, train_labels))
-        valid_dataset = tf.data.Dataset.from_tensor_slices((valid_features, valid_labels))
         test_dataset = tf.data.Dataset.from_tensor_slices((test_features, test_labels))
 
         train_dataset = train_dataset.shuffle(buffer_size=1024).batch(batch_size)
-        valid_dataset = valid_dataset.batch(batch_size)
         test_dataset = test_dataset.batch(batch_size)
 
-        return train_dataset, valid_dataset, test_dataset
+        return train_dataset, test_dataset
 
     else:
         print("[!!] Beginning Pipeline")
@@ -393,9 +374,6 @@ def preprocess_dataset(pos_dir, neg_dir, length, save_path):
     meta_df_neg = pd.DataFrame()
     for sub_dir in os.listdir(neg_dir):
         d = os.path.join(neg_dir, sub_dir)
-        # if os.path.isdir(d1):
-            # for sub_sub_dir in os.listdir(d1):
-            #     d2 = os.path.join(d1, sub_sub_dir)
         temp_pkt_df_neg = pd.DataFrame()
         if os.path.isdir(d):
             for f in os.listdir(d):
@@ -503,10 +481,10 @@ def preprocess_dataset(pos_dir, neg_dir, length, save_path):
     data_df['label'] = data_df['label'].astype('int32')
         
     # Normalise columns
-    data_df['Pkt_Sizes'] = data_df['Pkt_Sizes'].apply(scale_column, min=0, max=3000)                                # GLOBAL VARIABLES (NEEDS TO BE LOOKED AT)
-    data_df['Pkt_IATs'] = data_df['Pkt_IATs'].apply(scale_column, min=0, max=5000)                                  # GLOBAL VARIABLES (NEEDS TO BE LOOKED AT)
-    data_df['Time_Elapsed'] = data_df['Time_Elapsed'].apply(scale_column, min=0, max=10000)                         # GLOBAL VARIABLES (NEEDS TO BE LOOKED AT)
-    data_df['Pkt_Flags'] = data_df['Pkt_Flags'].apply(scale_column, min=0, max=64)                                  # GLOBAL VARIABLES (NEEDS TO BE LOOKED AT)
+    data_df['Pkt_Sizes'] = data_df['Pkt_Sizes'].apply(scale_column, min=0, max=3000)                                # GLOBAL VARIABLES (Gotten from Training Data)w
+    data_df['Pkt_IATs'] = data_df['Pkt_IATs'].apply(scale_column, min=0, max=5000)                                  # GLOBAL VARIABLES (Gotten from Training Data)
+    data_df['Time_Elapsed'] = data_df['Time_Elapsed'].apply(scale_column, min=0, max=10000)                         # GLOBAL VARIABLES (Gotten from Training Data)
+    data_df['Pkt_Flags'] = data_df['Pkt_Flags'].apply(scale_column, min=0, max=64)                                  # GLOBAL VARIABLES (Gotten from Training Data)
 
     # Save the dataframe
     data_df.to_csv(f'{save_path}/data.csv', index=True)
@@ -546,7 +524,6 @@ def get_tuple_length(lst):
         return len(lst)
     else:
         return 0
-    
 
 # Define a custom function to calculate the length of a list or return 0 for non-list values
 def get_list_length(lst):
@@ -555,7 +532,6 @@ def get_list_length(lst):
     else:
         return 0
     
-
 # Function to transform a row with varying length to a row with fixed length (m)
 def transform_row_from_tuple(row, m):
     if len(row) > m:
@@ -565,7 +541,6 @@ def transform_row_from_tuple(row, m):
         # Fill with zeros until the desired length is reached
         row += [0] * (m - len(row))
     return row
-
 
 # Function to pad and average nested lists
 def transform_row_from_list_of_lists(row, m):
@@ -607,8 +582,6 @@ def unravel_tf_dataset(dataset):
     labels = [label for sub_batch in batch_labels for label in sub_batch]
 
     return features, labels
-
-
 
 def get_cat_features(df, cat_feature_list=["Protocol", "Pkt_Direction", "Pkt_Flags"]):
     cat_feat_indices = []

@@ -147,7 +147,7 @@ def base_train():
     # Datasets
     pos_train = "CIC2017"
     neg_train = "CIC2017" # // CIC 2017 but just HULK -> Generalise to different networks + page sizes (CIC 2018 Hulk + DetGen Hulk)
-                          # // CIC 2017 but just HULK -> Generalise different attack categories (Rest of CIC 2017 Dos + CIC 2018 Dos)
+
 
     pos_test = "CIC2018"
     neg_test = "DetGenSSH"
@@ -186,7 +186,6 @@ if __name__ == '__main__':
     # Datasets
     pos_train = "CIC2017"
     neg_train = "CIC2017" # // CIC 2017 but just HULK -> Generalise to different networks + page sizes (CIC 2018 Hulk + DetGen Hulk)
-                          # // CIC 2017 but just HULK -> Generalise different attack categories (Rest of CIC 2017 Dos + CIC 2018 Dos)
 
     pos_test = "CIC2018"
     neg_test = "DetGenSSH"
@@ -199,69 +198,28 @@ if __name__ == '__main__':
 
     pkts_length = 10
     input_size = 2 + pkts_length*4
-    epochs = 64
+    epochs = 32
     resample=None
     save=False
     load=True
     model_save_path = './models'
-    attack_name = 'DoS2'
+    attack_name = 'DoS'
     from_logits = True
     pgd_steps = 5
+    tf.random.set_seed(100)
 
-    
 
-    # With time elapsed = 0.0
-    goodHTTP1 =         [[0.0, 0.0], [0.0, 0.0], # Time elapsed, protocol
-                        [0.0, 0.0], [1.0, 1.0], [0.0, 0.0], [0.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], # Pkt direction
-                        [2/256, 2/256], [18/256, 18/256], [16/256, 16/256], [24/256, 24/256], [16/256, 16/256], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], # Pkt flags
-                        [0.0, 1.0], [0.000001, 0.05], [0.000001, 0.05], [0.000001, 0.05], [0.000001, 0.05], [0.000001, 0.05], [0.000001, 0.05], [0.000001, 0.05], [0.000001, 0.05], [0.000001, 0.05], # Pkd IATs
-                        [52/1000, 52/1000], [52/1000, 52/1000], [40/1000, 40/1000], [100/1000, 500/1000], [40/1000, 40/1000], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]] # Pkt size
-
-    # With time elapsed between [0.001, 1.0]
-    goodHTTP2 =         [[0.002, 1.0], [0.0, 0.0], # Time elapsed, protocol
-                        [0.0, 0.0], [1.0, 1.0], [0.0, 0.0], [0.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], # Pkt direction
-                        [2/256, 2/256], [18/256, 18/256], [16/256, 16/256], [24/256, 24/256], [16/256, 16/256], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], # Pkt flags
-                        [0.0, 1.0], [0.000001, 0.05], [0.000001, 0.05], [0.000001, 0.05], [0.000001, 0.05], [0.000001, 0.05], [0.000001, 0.05], [0.000001, 0.05], [0.000001, 0.05], [0.000001, 0.05], # Pkd IATs
-                        [52/1000, 52/1000], [52/1000, 52/1000], [40/1000, 40/1000], [100/1000, 500/1000], [40/1000, 40/1000], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]] # Pkt size
-
-    invalid =          [[0.0, 1.0], [0.0, 1.0], # Time elapsed, protocol
-                        [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], # Pkt direction
-                        [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], # Pkt flags
-                        [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], # Pkd IATs
-                        [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]] # Pkt size
-    
+   
     hulk =             [[0.00000000000001, 0.001], [0.0, 0.0], # Time elapsed, protocol
                         [0.0, 0.0], [1.0, 1.0], [0.0, 0.0], [0.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], # Pkt direction
                         [2/256, 2/256], [18/256, 18/256], [16/256, 16/256], [24/256, 24/256], [16/256, 16/256], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], # Pkt flags
                         [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], # Pkd IATs
                         [52/1000, 52/1000], [52/1000, 52/1000], [40/1000, 40/1000], [100/1000, 500/1000], [40/1000, 40/1000], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]] # Pkt size
 
-
-
-    SYNFlood =         [[0.0, 1.0], [0.0, 1.0], # Time elapsed, protocol
-                        [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], # Pkt direction
-                        [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], # Pkt flags
-                        [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], # Pkd IATs
-                        [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]] # Pkt size
-    
-    slowhttptest =     [[0.0, 1.0], [0.0, 0.0], # Time elapsed, protocol
-                        [0.0, 0.0], [1.0, 1.0], [0.0, 0.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], # Pkt direction
-                        [2/256, 2/256], [18/256, 18/256], [16/256, 16/256], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], # Pkt flags
-                        [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], # Pkd IATs
-                        [52/1000, 52/1000], [52/1000, 52/1000], [40/1000, 40/1000], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]] # Pkt size
-    
-    slowIATsAttacks =  [[0.00000000000001, 0.001], [0.0, 0.0], # Time elapsed, protocol
-                        [0.0, 0.0], [1.0, 1.0], [0.0, 0.0], [0.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], # Pkt direction
-                        [2/256, 2/256], [18/256, 18/256], [16/256, 16/256], [24/256, 24/256], [16/256, 16/256], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], # Pkt flags
-                        [0, 1.0], [0, 1.0], [0, 1.0], [0, 1.0], [0, 1.0], [0, 1.0], [0, 1.0], [0, 1.0], [0, 1.0], [0, 1.0], # Pkd IATs
-                        [52/1000, 52/1000], [52/1000, 52/1000], [40/1000, 40/1000], [100/1000, 500/1000], [40/1000, 40/1000], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]] # Pkt size
-
-    model_name = 'mid'
-    model_names = ['big4']
+    model_names = ['mid']
     batch_sizes = [64]
-    #alfas = [0.0001]
-    #alfas = [0.00001]
-    alfas=[0.05, 0.02, 0.01]
+
+    alfas=[1.0, 0.00005] # We weight our adversarial training process, otherwise our model fails to learn anything. 1 = No adversarial training, 0 = only adversarial training
     
     for batch_size in batch_sizes:
 
@@ -269,26 +227,15 @@ if __name__ == '__main__':
         hyperrectangles_labels = []
 
         for _ in range(int((batch_size/36) + 1)):
-            for _ in range(9):
-                hyperrectangles.append(goodHTTP1)
-                hyperrectangles.append(goodHTTP2)
-                hyperrectangles_labels.append(0)
-                hyperrectangles_labels.append(0)
 
             for _ in range(9):
                 hyperrectangles.append(hulk)
                 hyperrectangles_labels.append(1)
 
-            for i in range(9):
-                temp = copy.deepcopy(slowIATsAttacks)
-                temp[i+23][0] = 0.06
-                hyperrectangles.append(temp)
-                hyperrectangles_labels.append(1)
-
         hyperrectangles = np.array(hyperrectangles)
         hyperrectangles_labels = np.array(hyperrectangles_labels)
 
-        train_dataset, valid_dataset, test_dataset = pipeline(pos_train,
+        train_dataset, test_dataset = pipeline(pos_train,
                                             neg_train,
                                             pos_test,
                                             neg_test,
@@ -304,6 +251,5 @@ if __name__ == '__main__':
                 # Adversarial model
                 print(f"=========== Alfa Value: {alfa} ===========")
                 model_adv = get_model(input_size=input_size, model=model_)
-                #model_adv = train_local(model_adv, 40, train_dataset, test_dataset, "./sqli_models/", "SQLi_trunc")
-                model_adv = train_adversarial(model_adv, train_dataset, valid_dataset, test_dataset, epochs, batch_size, pgd_steps, hyperrectangles, hyperrectangles_labels, alfa, from_logits, model_save_path, attack_name, model_)
+                model_adv = train_adversarial(model_adv, train_dataset, test_dataset, epochs, batch_size, pgd_steps, hyperrectangles, hyperrectangles_labels, alfa, from_logits, model_save_path, attack_name, model_)
 
